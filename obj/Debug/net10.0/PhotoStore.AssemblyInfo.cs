@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PhotoStore")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fab9e93e233c2ba04fce2b7be37f38ed968ae59f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c06de19528908bb9092704e58860e77b74262424")]
 [assembly: System.Reflection.AssemblyProductAttribute("PhotoStore")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PhotoStore")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

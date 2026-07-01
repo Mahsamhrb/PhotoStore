@@ -1,0 +1,4 @@
+wwwroot/images/
+bin/
+obj/
+*.log

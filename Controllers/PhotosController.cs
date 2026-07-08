@@ -27,17 +27,12 @@ public class PhotosController : ControllerBase
     {
         var result = await _photoService.GetById(id);
 
-        if (result is null)
-            return NotFound();
-
         return Ok(result);
     }
 
     [HttpPost]
     public async Task<ActionResult<PhotoDto>> Upload([FromForm]UploadPhotoDto dto)
     {
-        if(!ModelState.IsValid)
-            return BadRequest(ModelState);
 
         var result = await _photoService.Upload(dto);
 
@@ -47,13 +42,10 @@ public class PhotosController : ControllerBase
             result);
     }
 
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
+    [HttpPut("{id:int}/archive")]
+    public async Task<IActionResult> Archive(int id)
     {
-        var result = await _photoService.Delete(id);
-
-        if(!result)
-            return NotFound();
+        await _photoService.Archive(id);
 
         return NoContent();
     }
@@ -61,14 +53,8 @@ public class PhotosController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<PhotoDto>> Update(int id, [FromForm] UpdatePhotoDto dto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
         var result = await _photoService.Update(id, dto);
 
-        if (result == null)
-            return NotFound();
-
         return Ok(result);
-}
+    }
 }

@@ -3,20 +3,21 @@ using PhotoStore.Application.DTOs.Photos;
 using PhotoStore.Application.Interfaces;
 using PhotoStore.Domain.Entities;
 using PhotoStore.Infrastructure.Data;
+using PhotoStore.Domain.Enums;
+using PhotoStore.Application.Errors;
+using PhotoStore.Exceptions;
 
 namespace PhotoStore.Infrastructure.Services;
 
 public class PhotoService : IPhotoService
 {
     private readonly AppDbContext _context;
-    private readonly IWebHostEnvironment _env;
-    private readonly ILogger<PhotoService> _logger;
+    private readonly IFileService _fileService;
 
-    public PhotoService(AppDbContext context , IWebHostEnvironment env, ILogger<PhotoService> logger)
+    public PhotoService(AppDbContext context , IFileService fileService)
     {
         _context = context;
-        _env = env;
-        _logger = logger;
+        _fileService = fileService;
     }
     public async Task<List<PhotoDto>> GetAll()
     {
@@ -28,115 +29,84 @@ public class PhotoService : IPhotoService
                 Title = p.Title,
                 FileName = p.FileName,
                 Price = p.Price,
-                FilePath = p.FilePath
+                FilePath = p.FilePath,
+                Status = p.Status
             })
             .ToListAsync();
     }
-    public async Task<PhotoDto?> GetById(int id)
+   public async Task<PhotoDto?> GetById(int id)
     {
-        return await _context.Photos
+        var photo = await _context.Photos
             .AsNoTracking()
-            .Where(p => p.Id == id)
-            .Select(p => new PhotoDto
-            {
-                Id = p.Id,
-                Title = p.Title,
-                FileName = p.FileName,
-                Price = p.Price,
-                FilePath = p.FilePath
-            })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (photo == null)
+            throw new NotFoundException(PhotoErrors.NotFound);
+
+
+        return MapToDto(photo);
     }
+
     public async Task<PhotoDto> Upload(UploadPhotoDto dto)
     {
-        var imagesPath = Path.Combine(_env.WebRootPath, "images");
-        Directory.CreateDirectory(imagesPath);
-
-        if (dto.File is null || dto.File.Length == 0)
-            throw new ArgumentException("File is required.");
-
-        var fileName = Guid.NewGuid() + Path.GetExtension(dto.File.FileName);
-        var fullPath = Path.Combine(imagesPath, fileName);
-
-        using (var stream = new FileStream(fullPath, FileMode.Create))
-        {
-            await dto.File.CopyToAsync(stream);
-        }
+        var fileName = await _fileService.SaveAsync(dto.File!);
 
         var photo = new Photo
         {
             Title = dto.Title,
             Price = dto.Price,
             FileName = fileName,
-            FilePath = $"/images/{fileName}"
+            FilePath = $"/images/{fileName}",
+            Status = PhotoStatus.Available,
+            PurchaseCount = 0
         };
 
         await _context.Photos.AddAsync(photo);
+
         await _context.SaveChangesAsync();
 
-        return new PhotoDto
-        {
-            Id = photo.Id,
-            Title = photo.Title,
-            FileName = photo.FileName,
-            Price = photo.Price,
-            FilePath = photo.FilePath
-        };
+        return MapToDto(photo);
     }
-    public async Task<bool> Delete(int id)
+
+    public async Task Archive(int id)
     {
-        var photo = await _context.Photos.FirstOrDefaultAsync(p => p.Id == id);
+        var photo = await _context.Photos
+            .FirstOrDefaultAsync(p => p.Id == id);
 
         if (photo == null)
-            return false;
+            throw new NotFoundException(PhotoErrors.NotFound);
 
-        try
-        {
-            if (!string.IsNullOrWhiteSpace(photo.FileName))
-            {
-                var fullPath = Path.Combine(_env.WebRootPath, "images", photo.FileName);
 
-                if (File.Exists(fullPath))
-                    File.Delete(fullPath);
-            }
-        }
-        catch(Exception ex)
-        {
-            _logger.LogError(ex,"Failed to delete file for PhotoId {PhotoId}", id);            
-        }
-        
-        _context.Photos.Remove(photo);
+        if (photo.Status == PhotoStatus.Archived)
+            throw new BusinessException(PhotoErrors.Archived);
+
+
+        photo.Status = PhotoStatus.Archived;
+
         await _context.SaveChangesAsync();
-
-        return true;
     }
     public async Task<PhotoDto?> Update(int id, UpdatePhotoDto dto)
     {
         var photo = await _context.Photos.FirstOrDefaultAsync(p => p.Id == id);
 
         if (photo == null)
-            return null;
+            throw new NotFoundException(PhotoErrors.NotFound);
         
+        if (photo.Status == PhotoStatus.Archived)
+            throw new BusinessException(PhotoErrors.Archived);
+
         if (dto.File != null)
         {
             if(!string.IsNullOrWhiteSpace(photo.FileName))
             {
-                var oldPath = Path.Combine(_env.WebRootPath , "images" , photo.FileName);
+                await _fileService.DeleteAsync(photo.FileName!);
 
-                if (File.Exists(oldPath))
-                    File.Delete(oldPath);
+                var newFileName =
+                    await _fileService.SaveAsync(dto.File);
+
+                photo.FileName = newFileName;
+                photo.FilePath = $"/images/{newFileName}";
             }
-
-            var newFileName = Guid.NewGuid() + Path.GetExtension(dto.File.FileName);
-            var newPath = Path.Combine(_env.WebRootPath , "images", newFileName);
-
-            using (var stream = new FileStream(newPath , FileMode.Create))
-            {
-                await dto.File.CopyToAsync(stream);
-            }
-
-            photo.FileName = newFileName;
-            photo.FilePath =$"/images/{newFileName}";
         }
 
         photo.Title = dto.Title;
@@ -144,13 +114,19 @@ public class PhotoService : IPhotoService
 
         await _context.SaveChangesAsync();
 
+        return MapToDto(photo);
+    }
+
+    private static PhotoDto MapToDto(Photo photo)
+    {
         return new PhotoDto
         {
             Id = photo.Id,
             Title = photo.Title,
             FileName = photo.FileName,
             Price = photo.Price,
-            FilePath = photo.FilePath
+            FilePath = photo.FilePath,
+            Status = photo.Status
         };
     }
 }

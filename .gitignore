@@ -6,3 +6,4 @@ obj/
 *.log
 *.user
 *.suo
+appsettings.Development.json

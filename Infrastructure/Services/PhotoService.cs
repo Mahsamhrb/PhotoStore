@@ -34,7 +34,7 @@ public class PhotoService : IPhotoService
             })
             .ToListAsync();
     }
-   public async Task<PhotoDto?> GetById(int id)
+   public async Task<PhotoDto> GetById(int id)
     {
         var photo = await _context.Photos
             .AsNoTracking()
@@ -85,7 +85,7 @@ public class PhotoService : IPhotoService
 
         await _context.SaveChangesAsync();
     }
-    public async Task<PhotoDto?> Update(int id, UpdatePhotoDto dto)
+    public async Task<PhotoDto> Update(int id, UpdatePhotoDto dto)
     {
         var photo = await _context.Photos.FirstOrDefaultAsync(p => p.Id == id);
 
@@ -97,16 +97,16 @@ public class PhotoService : IPhotoService
 
         if (dto.File != null)
         {
-            if(!string.IsNullOrWhiteSpace(photo.FileName))
+            if (!string.IsNullOrWhiteSpace(photo.FileName))
             {
                 await _fileService.DeleteAsync(photo.FileName!);
-
-                var newFileName =
-                    await _fileService.SaveAsync(dto.File);
-
-                photo.FileName = newFileName;
-                photo.FilePath = $"/images/{newFileName}";
             }
+
+            var newFileName =
+                await _fileService.SaveAsync(dto.File);
+
+            photo.FileName = newFileName;
+            photo.FilePath = $"/images/{newFileName}";
         }
 
         photo.Title = dto.Title;

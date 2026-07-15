@@ -11,7 +11,7 @@ public class FileService : IFileService
         _env = env;
     }
 
-    public async Task<string> SaveAsync(IFormFile file)
+    public async Task<string> SaveAsync(IFormFile file, CancellationToken cancellationToken = default)
     {
         var imagesPath =
             Path.Combine(_env.WebRootPath, "images");
@@ -27,12 +27,12 @@ public class FileService : IFileService
         await using var stream =
             new FileStream(fullPath, FileMode.Create);
 
-        await file.CopyToAsync(stream);
+        await file.CopyToAsync(stream,cancellationToken);
 
         return fileName;
     }
 
-    public Task DeleteAsync(string fileName)
+    public Task DeleteAsync(string fileName, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(fileName))
             return Task.CompletedTask;

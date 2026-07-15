@@ -1,25 +1,17 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using PhotoStore.Infrastructure.Data;
+
 using PhotoStore.Application.Interfaces;
 using PhotoStore.Infrastructure.Services;
-using FluentValidation;
-using FluentValidation.AspNetCore;
 using PhotoStore.Middleware;
+using PhotoStore.Infrastructure;
+using PhotoStore.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.UseUrls("http://localhost:5098", "https://localhost:7113");
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddApplication();
 
-builder.Services.AddScoped<IPhotoService, PhotoService>();
-builder.Services.AddScoped<IFileService, FileService>();
-
-builder.Services.AddValidatorsFromAssemblyContaining<UploadPhotoDtoValidator>();
-builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
 

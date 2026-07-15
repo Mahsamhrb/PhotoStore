@@ -1,6 +1,11 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using PhotoStore.Application.DTOs.Photos;
-using PhotoStore.Application.Interfaces;
+using PhotoStore.Application.Features.Photos.Commands.ArchivePhoto;
+using PhotoStore.Application.Features.Photos.Commands.UpdatePhoto;
+using PhotoStore.Application.Features.Photos.Commands.UploadPhoto;
+using PhotoStore.Application.Features.Photos.Queries.GetAllPhotos;
+using PhotoStore.Application.Features.Photos.Queries.GetPhotoById;
+using PhotoStore.Controllers.Requests;
 
 namespace PhotoStore.Controllers;
 
@@ -8,33 +13,33 @@ namespace PhotoStore.Controllers;
 [Route("api/photos")]
 public class PhotosController : ControllerBase
 {
-    private readonly IPhotoService _photoService;
+    private readonly  IMediator _mediator;
 
-    public PhotosController(IPhotoService photoService)
+    public PhotosController(IMediator mediator)
     {
-        _photoService = photoService;
+        _mediator = mediator;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<PhotoDto>>> GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        var result = await _photoService.GetAll();
+        var result = await _mediator.Send(new GetAllPhotosQuery());
         return Ok(result);
     }
 
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<PhotoDto>> GetById(int id)
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id)
     {
-        var result = await _photoService.GetById(id);
+        var result = await _mediator.Send(new GetPhotoByIdQuery(id));
 
         return Ok(result);
     }
 
     [HttpPost]
-    public async Task<ActionResult<PhotoDto>> Upload([FromForm]UploadPhotoDto dto)
+    public async Task<IActionResult> Upload([FromForm]UploadPhotoCommand command)
     {
 
-        var result = await _photoService.Upload(dto);
+        var result = await _mediator.Send(command);
 
         return CreatedAtAction(
             nameof(GetById),
@@ -42,18 +47,26 @@ public class PhotosController : ControllerBase
             result);
     }
 
-    [HttpPut("{id:int}/archive")]
-    public async Task<IActionResult> Archive(int id)
+    [HttpPut("{id:guid}/archive")]
+    public async Task<IActionResult> Archive(Guid id)
     {
-        await _photoService.Archive(id);
+        await _mediator.Send(
+            new ArchivePhotoCommand(id));
 
         return NoContent();
     }
 
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult<PhotoDto>> Update(int id, [FromForm] UpdatePhotoDto dto)
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromForm] UpdatePhotoRequest request)
     {
-        var result = await _photoService.Update(id, dto);
+       var command = new UpdatePhotoCommand(
+        id,
+        request.Title,
+        request.Price,
+        request.File
+    );
+        
+        var result = await _mediator.Send(command);
 
         return Ok(result);
     }

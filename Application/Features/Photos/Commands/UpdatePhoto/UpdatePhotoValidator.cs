@@ -1,12 +1,16 @@
 using FluentValidation;
-using PhotoStore.Application.DTOs.Photos;
+using PhotoStore.Application.Features.Photos.Commands.UpdatePhoto;
 
-public class UpdatePhotoDtoValidator : AbstractValidator<UpdatePhotoDto>
+public class UpdatePhotoCommandValidator : AbstractValidator<UpdatePhotoCommand>
 {
     private const int MaxFileSize = 20* 1024 * 1024; 
 
-    public UpdatePhotoDtoValidator()
+    public UpdatePhotoCommandValidator()
     {
+        RuleFor(x => x.Id)
+        .NotEmpty()
+        .WithMessage("Photo Id is required");
+
         RuleFor(x => x.Title)
             .NotEmpty().WithMessage("Title is required")
             .MaximumLength(100);
@@ -17,6 +21,8 @@ public class UpdatePhotoDtoValidator : AbstractValidator<UpdatePhotoDto>
         When(x => x.File != null, () =>
         {
             RuleFor(x => x.File!.Length)
+                .GreaterThan(0)
+                .WithMessage("File cannot be empty")
                 .LessThanOrEqualTo(MaxFileSize)
                 .WithMessage("File Size must be less than 20MB");
 
@@ -29,7 +35,7 @@ public class UpdatePhotoDtoValidator : AbstractValidator<UpdatePhotoDto>
     private bool BeValidExtension(string fileName)
     {
         var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-        var ext = Path.GetExtension(fileName).ToLower();
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
         return allowed.Contains(ext);
     }
 }

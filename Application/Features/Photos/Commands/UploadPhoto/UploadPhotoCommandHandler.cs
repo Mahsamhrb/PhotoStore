@@ -25,8 +25,7 @@ public class UploadPhotoCommandHandler
             Price = request.Price,
             FileName = fileName,
             FilePath = $"/images/{fileName}",
-            Status = PhotoStatus.Available,
-            PurchaseCount = 0
+            Status = PhotoStatus.Available
         };
 
         await _photoRepository.AddAsync(photo,cancellationToken);

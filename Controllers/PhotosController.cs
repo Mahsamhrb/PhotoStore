@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using PhotoStore.Application.Features.Photos.Commands.ArchivePhoto;
+using PhotoStore.Application.Features.Photos.Commands.DeletePhoto;
 using PhotoStore.Application.Features.Photos.Commands.UpdatePhoto;
 using PhotoStore.Application.Features.Photos.Commands.UploadPhoto;
 using PhotoStore.Application.Features.Photos.Queries.GetAllPhotos;
@@ -69,5 +70,14 @@ public class PhotosController : ControllerBase
         var result = await _mediator.Send(command);
 
         return Ok(result);
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        await _mediator.Send(
+            new DeletePhotoCommand(id));
+        
+        return NoContent();
     }
 }

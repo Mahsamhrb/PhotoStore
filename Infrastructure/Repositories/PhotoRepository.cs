@@ -33,4 +33,9 @@ public class PhotoRepository : IPhotoRepository
         _context.Photos.Update(photo);
         await _context.SaveChangesAsync(cancellationToken);
     }
+    public async Task DeleteAsync(Photo photo, CancellationToken cancellationToken = default)
+    {
+        _context.Photos.Remove(photo);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

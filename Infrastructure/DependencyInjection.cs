@@ -5,6 +5,8 @@ using PhotoStore.Application.Interfaces;
 using PhotoStore.Infrastructure.Data;
 using PhotoStore.Infrastructure.Repositories;
 using PhotoStore.Infrastructure.Services;
+using Microsoft.AspNetCore.Identity;
+using PhotoStore.Domain.Entities;
 
 namespace PhotoStore.Infrastructure;
 
@@ -17,6 +19,11 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection")));
+
+        services
+        .AddIdentityCore<User>()
+        .AddRoles<IdentityRole<Guid>>()
+        .AddEntityFrameworkStores<AppDbContext>();
 
         services.AddScoped<IPhotoRepository, PhotoRepository>();
 

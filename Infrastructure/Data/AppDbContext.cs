@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PhotoStore.Domain.Entities;
 
 namespace PhotoStore.Infrastructure.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -11,8 +13,6 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Photo> Photos { get; set; }
-
-    public DbSet<User> Users { get; set; }
 
     public DbSet<Order> Orders { get; set; }
 
@@ -23,9 +23,9 @@ public class AppDbContext : DbContext
     public DbSet<Payment> Payments { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+        
         modelBuilder.ApplyConfigurationsFromAssembly(
             typeof(AppDbContext).Assembly);
-
-        base.OnModelCreating(modelBuilder);
     }
 }

@@ -12,7 +12,7 @@ using PhotoStore.Infrastructure.Data;
 namespace PhotoStore.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260726112200_InitialCreate")]
+    [Migration("20260726113851_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -371,9 +371,6 @@ namespace PhotoStore.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("integer");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
